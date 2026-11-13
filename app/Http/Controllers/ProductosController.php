@@ -3,42 +3,60 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Producto; // Asegúrate de tener tu modelo creado
+use App\Models\Producto;
 
 class ProductosController extends Controller
 {
+    // Vista principal que carga la tabla
     public function index()
     {
         $productos = Producto::all();
         return view('productos.index', compact('productos'));
     }
 
+    // Vista para crear
     public function create()
     {
         return view('productos.create');
     }
 
+    // Método store adaptado para recibir el formulario por AJAX y validar correctamente
     public function store(Request $request)
     {
         $request->validate([
             'producto' => 'required',
-            'categoria' => 'required',
+            'categoria' => 'required', // Coincide con el input 'categoria' del formulario
             'precio' => 'required|numeric',
             'stock' => 'required|integer',
         ]);
 
         Producto::create($request->all());
 
-        return redirect()->route('productos.index')->with('success', 'Producto creado con éxito');
+        return response()->json(['mensaje' => 'Producto creado con éxito']);
     }
 
+    // Vista para editar un registro específico
     public function edit($id)
     {
         $producto = Producto::findOrFail($id);
         return view('productos.edit', compact('producto'));
     }
 
-    public function update(Request $request, $id)
+    // Método AJAX para obtener todos los productos en JSON
+    public function obtenerProductos()
+    {
+        $productos = Producto::all();
+        return response()->json(['productos' => $productos]);
+    }
+
+    // Método AJAX para guardar (por compatibilidad)
+    public function guardar(Request $request)
+    {
+        return $this->store($request);
+    }
+
+    // Método AJAX para actualizar un producto existente
+    public function actualizar(Request $request, $id)
     {
         $request->validate([
             'producto' => 'required',
@@ -50,14 +68,15 @@ class ProductosController extends Controller
         $producto = Producto::findOrFail($id);
         $producto->update($request->all());
 
-        return redirect()->route('productos.index')->with('success', 'Producto actualizado con éxito');
+        return response()->json(['mensaje' => 'Producto actualizado con éxito']);
     }
 
+    // Método AJAX para eliminar un producto
     public function destroy($id)
     {
         $producto = Producto::findOrFail($id);
         $producto->delete();
 
-        return redirect()->route('productos.index')->with('success', 'Producto eliminado con éxito');
+        return response()->json(['mensaje' => 'Producto eliminado con éxito']);
     }
 }
